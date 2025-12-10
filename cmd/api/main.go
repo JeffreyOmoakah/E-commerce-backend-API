@@ -13,7 +13,7 @@ func main() {
 	ctx := context.Background()
 	
 	cfg:= config{
-		addr: env.GetString("ADDR", ":8080"),
+		addr: env.GetString("ADDR", ":3000"),
 		db: dbConfig{
 			dsn:env.GetString("GOOSE_DBSTRING", "host=localhost user=postgres password=postgres dbname=ecom sslmode=disable"),
 		},
@@ -36,6 +36,7 @@ func main() {
 	
 	api := application{
 		config: cfg,
+		db: conn,
 	}
 	
 	api.run(api.mount())

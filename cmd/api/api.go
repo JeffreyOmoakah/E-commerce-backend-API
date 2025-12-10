@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"time"
 
+	repo "github.com/JeffreyOmoakah/E-commerce-backend-API/internal/adapters/postgresql/sqlc"
 	"github.com/JeffreyOmoakah/E-commerce-backend-API/internal/products"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5"
 )
 
 // Mount routes to the application
@@ -29,10 +31,11 @@ func (app *application) mount () http.Handler {
 		w.Write([]byte("all good"))
 	})
  	
-	products.NewService()
-	productHandler := products.NewHandler(products.NewService())
+	productService := products.NewService(repo.New(app.db))
+	productHandler := products.NewHandler(productService)
 	r.Get("/products", productHandler.ListProducts)
-	return r
+	
+	return r 
 }
 
 // Run the application 
@@ -53,6 +56,7 @@ func (app *application) run(h http.Handler) error{
 
 type application struct {
 	config config // Application manager
+	db *pgx.Conn
 }
 
 type config struct {
