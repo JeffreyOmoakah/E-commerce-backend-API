@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/JeffreyOmoakah/E-commerce-backend-API/internal/products"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Mount routes to the application
@@ -32,15 +33,22 @@ func (app *application) mount () http.Handler {
 		w.Write([]byte("all good"))
 	})
  	
-	productService := products.NewService(repo.New(app.db))
+	productRepo := repo.New(app.db)
+	productService := products.NewService(productRepo)
 	productHandler := products.NewHandler(productService)
-	r.Get("/products", productHandler.ListProducts)
-	
-	orderService := orders.NewService(repo.New(app.db), app.db)
+
+	orderRepo := repo.New(app.db)
+	orderService := orders.NewService(orderRepo,app.db, app.logger)
 	ordersHandler := orders.NewHandler(orderService)
-	r.Post("/orders", ordersHandler.PlaceOrder)
-	
-	return r 
+
+
+	// Create v1 route group
+	r.Route("/v1", func(r chi.Router) {
+		r.Get("/products", productHandler.ListProducts)
+		r.Post("/orders", ordersHandler.PlaceOrder)
+	})
+
+	return r
 }
 
 // Run the application 
@@ -61,7 +69,8 @@ func (app *application) run(h http.Handler) error{
 
 type application struct {
 	config config // Application manager
-	db *pgx.Conn
+	db *pgxpool.Pool
+	logger *slog.Logger
 }
 
 type config struct {
