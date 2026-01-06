@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	repo "github.com/JeffreyOmoakah/E-commerce-backend-API/internal/adapters/postgresql/sqlc"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var (
@@ -16,13 +17,14 @@ var (
 
 type svc struct {
 	repo *repo.Queries
-	db   *pgx.Conn
+	db   *pgxpool.Pool
+	logger *slog.Logger
 }
 
-func NewService(repo *repo.Queries, db *pgx.Conn) Service {
+func NewService(repo *repo.Queries, db *pgxpool.Pool, logger *slog.Logger) Service {
 	return &svc {
-		repo: repo,
-		db: db,
+		repo:   repo,
+		db:     db,
 	}
 }
 
